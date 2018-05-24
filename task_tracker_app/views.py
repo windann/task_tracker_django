@@ -2,16 +2,7 @@ from django.shortcuts import render
 from .models import Task,Type
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from random import choice as ch, randint as r
-
-# Create your views here.
-
-def find_all_tasks(request):
-    tasks = Task.objects.all()
-    data = {
-        'tasks': tasks
-    }
-    return render(request, 'users_task_list.html', data)
+from random import choice as ch
 
 # создание нового таска
 def add_new_task(request):
@@ -107,6 +98,7 @@ def find_task(request):
 
 # получение всех тасков пользователя ( по id пользователя )
 def find_users_task_list(request):
+
     id = request.GET.dict()['id']
     tasks = Task.objects.filter(author=id)
 
@@ -119,25 +111,17 @@ def get_all_tasks(request):
     base_tasks = Task.objects.filter(base_task_id=None)
 
     tasks_dict = {}
+
     for base_task in base_tasks:
         tasks_in = Task.objects.filter(base_task_id=base_task)
         tasks_dict[base_task] = tasks_in
 
-    data = {
-
-        'tasks_dict': tasks_dict
-    }
-    print(tasks_dict)
-    return render(request, 'tasks_in.html', data)
+    return render(request, 'tasks_in.html', {'tasks_dict': tasks_dict})
 
 
 def filling(request):
 
     task_types = Type.objects.all()
-
-    """count_user_sql_query = "SELECT COUNT(1) FROM user"
-    cur.execute(count_user_sql_query)
-    count_user = cur.fetchone()[0]"""
 
     users = User.objects.all()
     base_tasks = Task.objects.all()
@@ -175,8 +159,6 @@ def filling(request):
 
         task = Task.objects.create(base_task_id=base_task, name_task=name, type=type, author=user)
         task.save()
-
-
 
     return get_all_tasks(request)
 

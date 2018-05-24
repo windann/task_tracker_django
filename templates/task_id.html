@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Task{% endblock %}
+
+{% block content %}
+
+    {% for task in tasks %}
+
+    <h1>{{ task.name_task }}</h1>
+    <h3>Статус:</h3>
+
+    {% if task.status == 1 %}
+        <div>Новая</div>
+    {% elif task.status == 2 %}
+        <div>В работе</div>
+    {% elif task.status == 3 %}
+        <div>Выполнена</div>
+    {% endif %}
+
+    {% if task.base_task_id is not None %}
+        <h3>Базовая задача:</h3>
+        <div>{{ task.base_task_id }}</div>
+    {% endif %}
+
+    <h3>Дата создания:</h3>
+    <div>{{ task.date }}</div>
+
+    <h3>Тип:</h3>
+    <div>{{ task.type }}</div>
+
+    {% if task.author is not None %}
+        <h3>Автор:</h3>
+        <div>{{ task.author }}</div>
+        <div>{{ task.author.first_name }} {{ task.author.last_name }}</div>
+
+    {% endif %}
+    {% endfor %}
+
+{% endblock %}

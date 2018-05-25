@@ -19,8 +19,8 @@ from task_tracker_app.views import find_task, \
     change_status,\
     find_users_task_list,\
     add_task_in,add_new_task,\
-    get_all_tasks, \
-    task_to_user, filling
+    get_task, \
+    task_to_user,  test
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,7 +29,7 @@ urlpatterns = [
     path('tasks_list/', find_users_task_list),
     path('add_task_in/',add_task_in),
     path('add/',add_new_task),
-    path('tasks_in/',get_all_tasks),
+    path('tasks_in/',get_task),
     path('task_to_user/',task_to_user),
-    path('fill/',filling)
+    path('test/',test)
 ]

@@ -14,7 +14,7 @@ def filling_tasks(apps, schema_editor):
     # version than this migration expects. We use the historical version.
     Type = apps.get_model('task_tracker_app', "Type")
     Task = apps.get_model('task_tracker_app', "Task")
-    User = apps.get_model('task_tracker_app',"django.contrib.auth.User")
+    User = apps.get_model('auth',"User")
 
     task_types = Type.objects.all()
 
@@ -24,7 +24,7 @@ def filling_tasks(apps, schema_editor):
     # 1 - created 2 - in progress 3 - done
     status = 1
 
-    for i in range(5):
+    for i in range(100000):
         type = ch(task_types)
         user = ch(list(users) + [None])
 
@@ -62,18 +62,18 @@ def filling_tasks(apps, schema_editor):
         task.save()
 
 
-"""def filling_users(apps, schema_editor):
+def filling_users(apps, schema_editor):
     fake = Faker('ru_RU')
     User = apps.get_model('task_tracker_app', auth.get_user_model())
 
-    for i in range(5):
+    for i in range(10000):
         first_name = fake.first_name()
         last_name = fake.last_name()
         login = translit(first_name[:2], reversed=True) + translit(last_name[:2], reversed=True) + str(i)
 
         u = User.objects.create(first_name=first_name,last_name = last_name,username=login)
         print(u)
-        u.save()"""
+        u.save()
 
 
 class Migration(migrations.Migration):
@@ -84,5 +84,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(filling_tasks),
-        #migrations.RunPython(filling_users)
+        migrations.RunPython(filling_users)
     ]

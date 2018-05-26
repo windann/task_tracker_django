@@ -20,7 +20,7 @@ from task_tracker_app.views import find_task, \
     find_users_task_list,\
     add_task_in,add_new_task,\
     get_task, \
-    task_to_user,  test
+    task_to_user
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,5 +31,4 @@ urlpatterns = [
     path('add/',add_new_task),
     path('tasks_in/',get_task),
     path('task_to_user/',task_to_user),
-    path('test/',test)
 ]

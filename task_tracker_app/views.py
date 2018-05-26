@@ -9,9 +9,28 @@ from django.http import JsonResponse, HttpResponse
 from django.core import serializers
 import json
 
-def test(request):
-    type = Type.objects.all().values()
-    return JsonResponse(list(type),safe=False)
+
+def type_serialize(types):
+    return [{"id":type_name.pk, "name_type":type_name.name_type} for type_name in types]
+
+def task_serialize(task):
+
+    if type(task) != list:
+
+        return {"id":task.pk,"name_task":task.name_task,"status":task.status,
+             "author":task.author.username,"type":task.type.name_type,"base_task":task.base_task_id.name_task,
+             "date":task.date}
+
+    else:
+        return [{"id": elem.pk, "name_task": elem.name_task, "status": elem.status,
+                "author": elem.author.username, "type": elem.type.name_type, "base_task": elem.base_task_id.name_task,
+                "date": elem.date} for elem in task]
+
+def task_serialize_with_children(task,childrens):
+
+    return {"id":task.pk,"name_task":task.name_task,"status":task.status,
+             "author":{"first_name":task.author.first_name,"last_name":task.author.last_name},"type":task.type.name_type,"base_task":task.base_task_id.name_task,
+             "date":task.date,"childrens":childrens}
 
 
 # создание нового таска
@@ -30,9 +49,8 @@ def add_new_task(request):
         type = Type.objects.get(name_type=params['type'])
         task = Task.objects.create(base_task_id=base_task_id, name_task=name_task, type=type,author=author)
         task.save()
-        tasks = Task.objects\
-            .get(id=id).values()
-        return JsonResponse(list(tasks),safe=False)
+        tasks = list(Task.objects.all())[-1]
+        return JsonResponse(task_serialize(tasks),safe=False)
     except KeyError:
         message = 'Вы ввели некоретные данные:('
         return render(request, 'message.html', {'message': message})
@@ -49,8 +67,8 @@ def add_task_in(request):
         task = Task.objects.create(base_task_id=base_task_id,name_task=name_task,type=type,author=author)
         task.save()
 
-        tasks = Task.objects.get(id=id).values()
-        return JsonResponse(list(tasks), safe=False)
+        tasks = list(Task.objects.all())[-1]
+        return JsonResponse(task_serialize(tasks), safe=False)
 
     except KeyError:
         message = 'Вы ввели некоретные данные:('
@@ -64,10 +82,11 @@ def task_to_user(request):
     try:
         user_name = auth.get_user_model().objects.get(username=params['username'])
         id = params['id']
-        Task.objects.filter(id=id).update(author=user_name)
 
-        task = Task.objects.filter(id=id).values()
-        return JsonResponse(list(task), safe=False)
+        Task.objects.filter(id=id).update(author=user_name)
+        tasks = Task.objects.get(id = id)
+
+        return JsonResponse(task_serialize(tasks), safe=False)
 
     except KeyError:
         message = 'Вы ввели некоретные данные:('
@@ -77,16 +96,17 @@ def task_to_user(request):
 
 # смена статуса таска
 def change_status(request):
+    params = request.GET.dict()
     try:
-        id = request.GET.dict()['id']
-        status = request.GET.dict()['status']
-        Task.objects.filter(id=id).update(status=status)
-        task = Task.objects.filter(id=id).values()
-
-        return JsonResponse(list(task), safe=False)
+        task_id = params['id']
+        status = params['status']
+        Task.objects.filter(id=task_id).update(status=status)
+        tasks = Task.objects.get(id=task_id)
+        return JsonResponse(task_serialize(tasks), safe=False)
 
     except KeyError:
         message = 'Вы ввели некоретные данные:('
+
     return render(request, 'message.html', {'message': message})
 
 
@@ -94,44 +114,38 @@ def change_status(request):
 def find_task(request):
     params = request.GET.dict()
     try:
+
         if 'id' in params:
             id = params['id']
-            tasks = Task.objects.filter(id=id).values()
+            tasks = Task.objects.get(id=id)
+
         elif 'name' in params:
             name = params['name']
-            tasks = Task.objects.filter(name_task__contains=name).values()
+            tasks = Task.objects.filter(name_task__contains=name)
 
-        return JsonResponse(list(tasks), safe=False)
+        return JsonResponse(task_serialize(tasks), safe=False)
 
     except ObjectDoesNotExist:
         message = 'Такого id не существует:('
         return render(request, 'message.html', {'message': message})
 
 
-
 # получение всех тасков пользователя ( по id пользователя )
 def find_users_task_list(request):
 
     id = request.GET.dict()['id']
-    tasks = Task.objects.filter(author=id).values()
+    tasks = Task.objects.filter(author=id)
 
-    return JsonResponse(list(tasks), safe=False)
+    return JsonResponse(task_serialize(tasks), safe=False)
 
 
 # получение списка таска с вложенными подтасками
 def get_task(request):
     params = request.GET.dict()
-    base_task_id = params['id']
+    task_id = params['id']
 
-    task = Task.objects.filter(id=base_task_id).select_related('author').values()
+    task = list(Task.objects.filter(id=task_id).select_related('author','base_task_id'))[0]
+    childrens = [task.name_task for task in Task.objects.filter(base_task_id=task_id)]
 
-    #user_id = task[0].author.id
-    #author = auth.get_user_model().objects.filter(id=user_id).values()
-
-    #base_task_id = task[0].base_task_id
-    #childrens = Task.objects.filter(base_task_id=base_task_id).values()
-
-    #task = dict(task)
-
-    return JsonResponse(list(task), safe=False)
+    return JsonResponse(task_serialize_with_children(task,childrens), safe=False)
 
